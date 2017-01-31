@@ -2,6 +2,8 @@
 
 import random
 from PIL import Image
+from math import cos, sin
+from random import randint
 
 
 def build_random_function(min_depth, max_depth):
@@ -9,7 +11,7 @@ def build_random_function(min_depth, max_depth):
         at most max_depth (see assignment writeup for definition of depth
         in this context)
 
-        min_depth: the minimum depth of the random function
+        min_depth: the minimum depth of the randrom function
         max_depth: the maximum depth of the random function
         returns: the randomly generated function represented as a nested list
                  (see assignment writeup for details on the representation of
@@ -17,6 +19,21 @@ def build_random_function(min_depth, max_depth):
     """
     # TODO: implement this
     pass
+    rand_funcs = ['prod', 'avg', 'sin_pi', 'cos_pi', 'x', 'y']
+    if min_depth > 0:
+        max_val = 3
+    else:
+        max_val = 5
+    if max_depth > 0:
+        cur_func = rand_funcs[randint(0, max_val)]
+    else:
+        cur_func = rand_funcs[randint(4,5)]
+
+    if cur_func == 'x' or 'y':
+        return cur_func
+    else:
+        return build_random_function(min_depth-1,max_depth-1)
+
 
 
 def evaluate_random_function(f, x, y):
@@ -33,8 +50,21 @@ def evaluate_random_function(f, x, y):
         >>> evaluate_random_function(["y"],0.1,0.02)
         0.02
     """
-    # TODO: implement this
-    pass
+    case = {
+        'x': x,
+        'y': y,
+        'prod': evaluate_random_function(f[1],x,y)*evaluate_random_function(f[2],x,y)
+        'avg': .5*(evaluate_random_function(f[1], x, y)+evaluate_random_function(f[2],x,y))
+        'cos_pi': cos(pi*f[1])
+        'sin_pi': sin(pi*f[1])
+    }
+    return case[f[0]]
+
+
+    if f[0] == 'x':
+        return x
+    elif f[0] == 'y':
+        return y
 
 
 def remap_interval(val,
@@ -65,7 +95,7 @@ def remap_interval(val,
         1.5
     """
     # TODO: implement this
-    pass
+    return (val-input_interval_start)*((output_interval_end-output_interval_start)/(input_interval_end-input_interval_start)) + output_interval_start
 
 
 def color_map(val):
@@ -143,7 +173,7 @@ if __name__ == '__main__':
     # Create some computational art!
     # TODO: Un-comment the generate_art function call after you
     #       implement remap_interval and evaluate_random_function
-    # generate_art("myart.png")
+    generate_art("myart.png")
 
     # Test that PIL is installed correctly
     # TODO: Comment or remove this function call after testing PIL install
