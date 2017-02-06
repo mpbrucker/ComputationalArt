@@ -2,7 +2,7 @@
 
 import random
 from PIL import Image
-from math import cos, sin
+from math import cos, sin, pi
 from random import randint
 
 
@@ -17,23 +17,23 @@ def build_random_function(min_depth, max_depth):
                  (see assignment writeup for details on the representation of
                  these functions)
     """
-    # TODO: implement this
-    pass
-    rand_funcs = ['prod', 'avg', 'sin_pi', 'cos_pi', 'x', 'y']
+    rand_funcs = ['prod', 'avg', 'sin_pi', 'cos_pi', 'cube', 'square', 'x', 'y']
     if min_depth > 0:
-        max_val = 3
+        max_val = len(rand_funcs)-3
     else:
-        max_val = 5
+        max_val = len(rand_funcs)-1
+
     if max_depth > 0:
         cur_func = rand_funcs[randint(0, max_val)]
     else:
-        cur_func = rand_funcs[randint(4,5)]
-
-    if cur_func == 'x' or 'y':
-        return cur_func
+        cur_func = rand_funcs[randint(len(rand_funcs)-2,len(rand_funcs)-1)]
+    if cur_func in ['x', 'y']:
+        return [cur_func]
     else:
-        return build_random_function(min_depth-1,max_depth-1)
-
+        # if cur_func in ['sin_pi','cos_pi']:
+        #     return [cur_func, build_random_function(min_depth-1,max_depth-1)]
+        # else:
+        return [cur_func, build_random_function(min_depth-1, max_depth-1), build_random_function(min_depth-1, max_depth-1)]
 
 
 def evaluate_random_function(f, x, y):
@@ -50,21 +50,35 @@ def evaluate_random_function(f, x, y):
         >>> evaluate_random_function(["y"],0.1,0.02)
         0.02
     """
-    case = {
-        'x': x,
-        'y': y,
-        'prod': evaluate_random_function(f[1],x,y)*evaluate_random_function(f[2],x,y)
-        'avg': .5*(evaluate_random_function(f[1], x, y)+evaluate_random_function(f[2],x,y))
-        'cos_pi': cos(pi*f[1])
-        'sin_pi': sin(pi*f[1])
-    }
-    return case[f[0]]
-
-
+    # print(f)
     if f[0] == 'x':
         return x
     elif f[0] == 'y':
         return y
+    elif f[0] == 'prod':
+        return evaluate_random_function(f[1], x, y)*evaluate_random_function(f[2], x, y)
+    elif f[0] == 'avg':
+        return 0.5*(evaluate_random_function(f[1], x, y)+evaluate_random_function(f[2], x, y))
+    elif f[0] == 'cos_pi':
+        return cos(pi*evaluate_random_function(f[1], x, y))
+    elif f[0] == 'sin_pi':
+        return sin(pi*evaluate_random_function(f[1], x, y))
+    elif f[0] == 'cube':
+        return evaluate_random_function(f[1], x, y)**3
+    elif f[0] == 'square':
+        return evaluate_random_function(f[1], x, y)**2
+
+    # case = {
+    #     'x': x,
+    #     'y': y,
+    #     'prod': evaluate_random_function(f[1],x,y)*evaluate_random_function(f[2],x,y),
+    #     'avg': 0.5*(evaluate_random_function(f[1], x, y)+evaluate_random_function(f[2],x,y)),
+    #     'cos_pi': cos(pi*evaluate_random_function(f[1],x,y)),
+    #     'sin_pi': sin(pi*evaluate_random_function(f[1],x,y)),
+    # }
+    # if f[0] == 'x' or f[0] == 'y':
+    #     print('test')
+    # return case[f[0]]
 
 
 def remap_interval(val,
@@ -146,9 +160,9 @@ def generate_art(filename, x_size=350, y_size=350):
         x_size, y_size: optional args to set image dimensions (default: 350)
     """
     # Functions for red, green, and blue channels - where the magic happens!
-    red_function = ["x"]
-    green_function = ["y"]
-    blue_function = ["x"]
+    red_function = build_random_function(7, 9)
+    green_function = build_random_function(7, 9)
+    blue_function = build_random_function(7, 9)
 
     # Create image and loop over all pixels
     im = Image.new("RGB", (x_size, y_size))
@@ -168,7 +182,9 @@ def generate_art(filename, x_size=350, y_size=350):
 
 if __name__ == '__main__':
     import doctest
-    doctest.testmod()
+    # doctest.testmod()
+    # rand_func = (build_random_function(5,7))
+
 
     # Create some computational art!
     # TODO: Un-comment the generate_art function call after you
@@ -177,4 +193,4 @@ if __name__ == '__main__':
 
     # Test that PIL is installed correctly
     # TODO: Comment or remove this function call after testing PIL install
-    test_image("noise.png")
+    # test_image("noise.png")
