@@ -20,10 +20,10 @@ def build_random_function(min_depth, max_depth):
     # Returns either x or y
     # Important to note: all randomness must not be in the lambas
     # Otherwise they will generate a different function for each pixel
-    return_val = [lambda x, y: x, lambda x, y: y][randint(0, 1)]
+    return_val = [lambda x, y, t: x, lambda x, y, t: y, lambda x, y, t: t][randint(0, 2)]
     # List of all other functions
-    rand_funcs = [lambda x, y: x*y, lambda x, y: .5*x+y, lambda x, y: sin(pi*x),
-                  lambda x, y: cos(pi*x), lambda x, y: x**3, lambda x, y: x**2]
+    rand_funcs = [lambda x, y, t: x*y*t, lambda x, y, t: .3*(x+y+t), lambda x, y, t: sin(pi*x),
+                  lambda x, y, t: cos(pi*x), lambda x, y, t: x**3, lambda x, y, t: x**2]
 
     # We have reached the max limit of recursion, stop
     if max_depth <= 0:
@@ -37,7 +37,8 @@ def build_random_function(min_depth, max_depth):
         # otherwise a new function is generated with each labmda call (which is bad)
         func1 = build_random_function(min_depth-1, max_depth-1)
         func2 = build_random_function(min_depth-1, max_depth-1)
-        return lambda x, y: cur_func(func1(x, y), func2(x, y))  # Combine the recursed functions
+        func3 = build_random_function(min_depth-1, max_depth-1)
+        return lambda x, y, t: cur_func(func1(x, y, t), func2(x, y, t), func3(x, y, t))  # Combine the recursed functions
 
 def remap_interval(val,
                    input_interval_start,
@@ -111,36 +112,38 @@ def test_image(filename, x_size=350, y_size=350):
     im.save(filename)
 
 
-def generate_art(filename, x_size=350, y_size=350):
+def generate_art(filename, x_size=20, y_size=20):
     """ Generate computational art and save as an image file.
 
         filename: string filename for image (should be .png)
         x_size, y_size: optional args to set image dimensions (default: 350)
     """
     # Functions for red, green, and blue channels - where the magic happens!
-    red_function = build_random_function(7, 9)
-    green_function = build_random_function(7, 9)
-    blue_function = build_random_function(7, 9)
+    red_function = build_random_function(5, 7)
+    green_function = build_random_function(5, 7)
+    blue_function = build_random_function(5, 7)
 
     # Create image and loop over all pixels
     im = Image.new("RGB", (x_size, y_size))
     pixels = im.load()
-    for i in range(x_size):
-        for j in range(y_size):
-            x = remap_interval(i, 0, x_size, -1, 1)
-            y = remap_interval(j, 0, y_size, -1, 1)
-            pixels[i, j] = (
-                    # Evaluates our random lambdas for each pixel value
-                    color_map(red_function(x, y)),
-                    color_map(green_function(x, y)),
-                    color_map(blue_function(x, y))
-                    )
-
-    im.save(filename)
+    for frame in range(0,100):
+        t = remap_interval(frame, 0, 100, -1, 1)
+        for i in range(x_size):
+            for j in range(y_size):
+                x = remap_interval(i, 0, x_size, -1, 1)
+                y = remap_interval(j, 0, y_size, -1, 1)
+                pixels[i, j] = (
+                        # Evaluates our random lambdas for each pixel value
+                        color_map(red_function(x, y, t)),
+                        color_map(green_function(x, y, t)),
+                        color_map(blue_function(x, y, t))
+                        )
+        im.save(filename + str(frame) + ".png")
+        print('Frame ' + str(frame+1) + ' complete.')
 
 
 if __name__ == '__main__':
     import doctest
     # doctest.testmod()
     # Create some computational art!
-    generate_art("myart.png")
+    generate_art("frames/myart")
