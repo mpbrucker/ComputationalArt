@@ -11,90 +11,33 @@ def build_random_function(min_depth, max_depth):
         at most max_depth (see assignment writeup for definition of depth
         in this context)
 
-        min_depth: the minimum depth of the randrom function
+        min_depth: the minimum depth of the random function
         max_depth: the maximum depth of the random function
         returns: the randomly generated function represented as a nested list
                  (see assignment writeup for details on the representation of
                  these functions)
     """
-    func_names = ['Prod', 'Avg', 'Sin','Cos','Cubed','Squared','x','y']
-    rand_funcs = [lambda x,y: x*y, lambda x, y: .5*x+y, lambda x, y: sin(pi*x), lambda x,y: cos(pi*x), lambda x,y: x**3, lambda x,y: x**2, lambda x,y: x, lambda x,y: y]
-    if min_depth > 0:
-        max_val = len(rand_funcs)-3
-    else:
-        max_val = len(rand_funcs)-1
+    # Returns either x or y
+    # Important to note: all randomness must not be in the lambas
+    # Otherwise they will generate a different function for each pixel
+    return_val = [lambda x, y: x, lambda x, y: y][randint(0, 1)]
+    # List of all other functions
+    rand_funcs = [lambda x, y: x*y, lambda x, y: .5*x+y, lambda x, y: sin(pi*x),
+                  lambda x, y: cos(pi*x), lambda x, y: x**3, lambda x, y: x**2]
 
-    cur_val = randint(0, max_val)
-    cur_func = rand_funcs[cur_val]
-    # print('Max val:', max_depth, 'Func: ', func_names[cur_val])
-
+    # We have reached the max limit of recursion, stop
     if max_depth <= 0:
-        # print('Returning x or y')
-        return rand_funcs[randint(len(rand_funcs)-2, len(rand_funcs)-1)]
-        # return lambda x: x
+        return return_val  # Return either x or y
     else:
-        try:
-            func1 = build_random_function(min_depth-1, max_depth-1)
-            func2 = build_random_function(min_depth-1, max_depth-1)
-        except RuntimeError:
-            pass
-        return lambda x, y: cur_func(func1(x, y), func2(x, y))
-    # rand_funcs = ['prod', 'avg', 'sin_pi', 'cos_pi', 'cube', 'square', 'x', 'y']
-
-    # print(cur_func)
-    # if max_val > len(rand_funcs)-3:
-    #     return cur_func
-    # else:
-    #     # if cur_func in ['sin_pi','cos_pi']:
-    #     #     return [cur_func, build_random_function(min_depth-1,max_depth-1)]
-    #     # else:
-    #     return cur_func(build_random_function(min_depth-1,max_depth-1),build_random_function(min_depth-1,min_depth-1))
-
-
-def evaluate_random_function(f, x, y):
-    """ Evaluate the random function f with inputs x,y
-        Representation of the function f is defined in the assignment writeup
-
-        f: the function to evaluate
-        x: the value of x to be used to evaluate the function
-        y: the value of y to be used to evaluate the function
-        returns: the function value
-
-        >>> evaluate_random_function(["x"],-0.5, 0.75)
-        -0.5
-        >>> evaluate_random_function(["y"],0.1,0.02)
-        0.02
-    """
-    # print(f)
-    if f[0] == 'x':
-        return x
-    elif f[0] == 'y':
-        return y
-    elif f[0] == 'prod':
-        return evaluate_random_function(f[1], x, y)*evaluate_random_function(f[2], x, y)
-    elif f[0] == 'avg':
-        return 0.5*(evaluate_random_function(f[1], x, y)+evaluate_random_function(f[2], x, y))
-    elif f[0] == 'cos_pi':
-        return cos(pi*evaluate_random_function(f[1], x, y))
-    elif f[0] == 'sin_pi':
-        return sin(pi*evaluate_random_function(f[1], x, y))
-    elif f[0] == 'cube':
-        return evaluate_random_function(f[1], x, y)**3
-    elif f[0] == 'square':
-        return evaluate_random_function(f[1], x, y)**2
-
-    # case = {
-    #     'x': x,
-    #     'y': y,
-    #     'prod': evaluate_random_function(f[1],x,y)*evaluate_random_function(f[2],x,y),
-    #     'avg': 0.5*(evaluate_random_function(f[1], x, y)+evaluate_random_function(f[2],x,y)),
-    #     'cos_pi': cos(pi*evaluate_random_function(f[1],x,y)),
-    #     'sin_pi': sin(pi*evaluate_random_function(f[1],x,y)),
-    # }
-    # if f[0] == 'x' or f[0] == 'y':
-    #     print('test')
-    # return case[f[0]]
-
+        # If we've reached the minimum level of recursion, have a 50% chance to end there
+        if min_depth <= 0 and randint(0, 1):
+            return return_val
+        cur_func = rand_funcs[randint(0, len(rand_funcs)-1)]  # Get random function
+        # IMPORTANT: these must be evaluated outside of a lambda
+        # otherwise a new function is generated with each labmda call (which is bad)
+        func1 = build_random_function(min_depth-1, max_depth-1)
+        func2 = build_random_function(min_depth-1, max_depth-1)
+        return lambda x, y: cur_func(func1(x, y), func2(x, y))  # Combine the recursed functions
 
 def remap_interval(val,
                    input_interval_start,
@@ -175,9 +118,9 @@ def generate_art(filename, x_size=350, y_size=350):
         x_size, y_size: optional args to set image dimensions (default: 350)
     """
     # Functions for red, green, and blue channels - where the magic happens!
-    red_function = build_random_function(7, 7)
-    green_function = build_random_function(7, 7)
-    blue_function = build_random_function(7, 7)
+    red_function = build_random_function(7, 9)
+    green_function = build_random_function(7, 9)
+    blue_function = build_random_function(7, 9)
 
     # Create image and loop over all pixels
     im = Image.new("RGB", (x_size, y_size))
@@ -187,6 +130,7 @@ def generate_art(filename, x_size=350, y_size=350):
             x = remap_interval(i, 0, x_size, -1, 1)
             y = remap_interval(j, 0, y_size, -1, 1)
             pixels[i, j] = (
+                    # Evaluates our random lambdas for each pixel value
                     color_map(red_function(x, y)),
                     color_map(green_function(x, y)),
                     color_map(blue_function(x, y))
@@ -196,19 +140,7 @@ def generate_art(filename, x_size=350, y_size=350):
 
 
 if __name__ == '__main__':
-    # test = build_random_function(1,2)
-    # print(test(2,3))
-
     import doctest
     # doctest.testmod()
-    # rand_func = (build_random_function(5,7))
-
-
     # Create some computational art!
-    # TODO: Un-comment the generate_art function call after you
-    #       implement remap_interval and evaluate_random_function
     generate_art("myart.png")
-
-    # Test that PIL is installed correctly
-    # TODO: Comment or remove this function call after testing PIL install
-    # test_image("noise.png")
