@@ -6,7 +6,7 @@ from math import cos, sin, pi
 from random import randint
 
 
-def build_random_function(min_depth, max_depth,func=None):
+def build_random_function(min_depth, max_depth):
     """ Builds a random function of depth at least min_depth and depth
         at most max_depth (see assignment writeup for definition of depth
         in this context)
@@ -17,25 +17,28 @@ def build_random_function(min_depth, max_depth,func=None):
                  (see assignment writeup for details on the representation of
                  these functions)
     """
-    func_names = ['Prod','Avg','Sin','Cos','Cubed','Squared','x','y']
-    rand_funcs = [lambda x,y: build_random_function(min_depth-1,max_depth-1)(x,y)*build_random_function(min_depth-1,max_depth-1)(x,y),  \
-                  lambda x,y: .5*(build_random_function(min_depth-1,max_depth-1)(x,y)+build_random_function(min_depth-1,max_depth-1)(x,y)), \
-                  lambda x,y: sin(pi*build_random_function(min_depth-1,max_depth-1)(x,y)), lambda x,y: cos(pi*build_random_function(min_depth-1,max_depth-1)(x,y)), \
-                  lambda x,y: build_random_function(min_depth-1,max_depth-1)(x,y)**3, lambda x,y: build_random_function(min_depth-1,max_depth-1)(x,y)**2,  \
-                  lambda x,y: x, lambda x,y: y]
+    func_names = ['Prod', 'Avg', 'Sin','Cos','Cubed','Squared','x','y']
+    rand_funcs = [lambda x,y: x*y, lambda x, y: .5*x+y, lambda x, y: sin(pi*x), lambda x,y: cos(pi*x), lambda x,y: x**3, lambda x,y: x**2, lambda x,y: x, lambda x,y: y]
     if min_depth > 0:
         max_val = len(rand_funcs)-3
     else:
         max_val = len(rand_funcs)-1
 
     cur_val = randint(0, max_val)
-    # cur_val = 0
+    cur_func = rand_funcs[cur_val]
+    # print('Max val:', max_depth, 'Func: ', func_names[cur_val])
+
     if max_depth <= 0:
         # print('Returning x or y')
-        return rand_funcs[-1]
-        # return rand_funcs[randint(len(rand_funcs)-2, len(rand_funcs)-1)]
-    print('Max val:', max_depth, 'Func: ', func_names[cur_val])
-    return rand_funcs[cur_val]
+        return rand_funcs[randint(len(rand_funcs)-2, len(rand_funcs)-1)]
+        # return lambda x: x
+    else:
+        try:
+            func1 = build_random_function(min_depth-1, max_depth-1)
+            func2 = build_random_function(min_depth-1, max_depth-1)
+        except RuntimeError:
+            pass
+        return lambda x, y: cur_func(func1(x, y), func2(x, y))
     # rand_funcs = ['prod', 'avg', 'sin_pi', 'cos_pi', 'cube', 'square', 'x', 'y']
 
     # print(cur_func)
@@ -172,9 +175,9 @@ def generate_art(filename, x_size=350, y_size=350):
         x_size, y_size: optional args to set image dimensions (default: 350)
     """
     # Functions for red, green, and blue channels - where the magic happens!
-    red_function = build_random_function(3, 3)
-    green_function = build_random_function(3, 3)
-    blue_function = build_random_function(3, 3)
+    red_function = build_random_function(7, 7)
+    green_function = build_random_function(7, 7)
+    blue_function = build_random_function(7, 7)
 
     # Create image and loop over all pixels
     im = Image.new("RGB", (x_size, y_size))
@@ -184,11 +187,9 @@ def generate_art(filename, x_size=350, y_size=350):
             x = remap_interval(i, 0, x_size, -1, 1)
             y = remap_interval(j, 0, y_size, -1, 1)
             pixels[i, j] = (
-                    -1,
-                    # color_map(red_function(x, y)),
+                    color_map(red_function(x, y)),
                     color_map(green_function(x, y)),
-                    # color_map(blue_function(x, y))
-                    -1
+                    color_map(blue_function(x, y))
                     )
 
     im.save(filename)
