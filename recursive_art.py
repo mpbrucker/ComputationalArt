@@ -12,6 +12,10 @@ import random
 from PIL import Image
 from math import cos, sin, pi
 from random import randint
+import pygame
+import alsaaudio
+import audioop
+from os import listdir
 
 
 def build_random_function(min_depth, max_depth, is_movie=False):
@@ -145,10 +149,11 @@ def generate_art(filename, x_size=350, y_size=350, frames=1):
     is_movie = (frames-1) > 0
 
     # Functions for red, green, and blue channels - where the magic happens!
-    red_function = build_random_function(7, 9, is_movie)
-    green_function = build_random_function(7, 9, is_movie)
-    blue_function = build_random_function(7, 9, is_movie)
+    red_function = build_random_function(3, 5, is_movie)
+    green_function = build_random_function(3, 5, is_movie)
+    blue_function = build_random_function(3, 5, is_movie)
 
+    print("Built functions.")
     # Create image and loop over all pixels
     im = Image.new("RGB", (x_size, y_size))
     pixels = im.load()
@@ -175,10 +180,53 @@ def generate_art(filename, x_size=350, y_size=350, frames=1):
                             color_map(blue_function(x, y))
                             )
         im.save(filename + str(frame) + ".png")
+        print("Frame" + str(frame) + " done.")
+
+
+def get_img_surfaces(direc="frames"):
+    """
+    Converts all images in direc to pygame surfaces
+    """
+    files = sorted(listdir(direc))  # List all files in directory
+    all_imgs = [pygame.image.load("frames/" + file_name) for file_name in files]  # Load the images using pygame
+    return all_imgs
+
+
+class AudioInput():
+
+    def __init__(self):
+        """
+        Initializes a new AudioInput object.
+        """
+        self.inp = alsaaudio.PCM(alsaaudio.PCM_CAPTURE, 0)
+        self.inp.setchannels(1)
+        self.inp.setrate(16000)
+        self.inp.setformat(alsaaudio.PCM_FORMAT_S16_LE)
+        self.inp.setperiodsize(160)
+
+    def get_audio_level(self):
+        """
+        Returns the audio level at the current time.
+        """
+        l, data = self.inp.read()  # Read the input data
+        if l:
+            return audioop.rms(data, 2)  # Returns the current volume
+        else:
+            return 0
 
 
 if __name__ == '__main__':
     import doctest
-    doctest.testmod(verbose=True)
+    doctest.testmod()
     # Create some computational art!
-    generate_art("example")
+    num_frames = 50
+    # Optionally, generate new frames
+    # generate_art("frames/sound", x_size=500, y_size=500, frames=num_frames)
+    screen = pygame.display.set_mode((500, 500))
+    audio = AudioInput()  # New audioInput object
+    imgs_list = get_img_surfaces()  # Gets all imagesseimagesse
+    while True:
+        level = int(audio.get_audio_level()/500)  # Get current level, approximately scaled 1 - 100
+        cur_img = imgs_list[level % num_frames]  # Load the image corresponding to the current level
+        screen.blit(cur_img, (0, 0))  # Display the current image
+        pygame.display.flip()  # Updat the screen
